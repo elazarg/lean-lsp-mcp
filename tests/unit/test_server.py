@@ -144,7 +144,6 @@ async def test_app_lifespan_preserves_startup_error(
         async with server.app_lifespan(object()):
             pass
 
-
 def test_rate_limited_allows_within_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     times = iter([100, 101])
     monkeypatch.setattr(server.time, "time", lambda: next(times))
@@ -273,6 +272,34 @@ async def test_shared_loogle_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
     # LoogleManager constructed and started only once
     assert fake_manager.ensure_installed.call_count == 1
     assert fake_manager.start.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_shared_loogle_retries_after_transient_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    server._shared_loogle_init_done = False
+    server._shared_loogle_manager = None
+    server._shared_loogle_available = False
+
+    monkeypatch.setenv("LEAN_LOOGLE_LOCAL", "true")
+
+    fake_manager = MagicMock()
+    fake_manager.ensure_installed.return_value = True
+    fake_manager.start = AsyncMock(side_effect=[False, True])
+
+    monkeypatch.setattr(server, "LoogleManager", lambda **_kwargs: fake_manager)
+
+    mgr1, avail1 = await server._ensure_shared_loogle(None)
+    assert mgr1 is fake_manager
+    assert avail1 is False
+    assert server._shared_loogle_init_done is False
+
+    mgr2, avail2 = await server._ensure_shared_loogle(None)
+    assert mgr2 is fake_manager
+    assert avail2 is True
+    assert server._shared_loogle_init_done is True
+    assert fake_manager.start.call_count == 2
 
 
 class _BaseMultiAttemptClient:

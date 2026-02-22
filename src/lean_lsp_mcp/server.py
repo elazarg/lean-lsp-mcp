@@ -184,25 +184,33 @@ async def _ensure_shared_loogle(
     async with _shared_loogle_lock:
         if _shared_loogle_init_done:
             return _shared_loogle_manager, _shared_loogle_available
-        _shared_loogle_init_done = True
 
         if os.environ.get("LEAN_LOOGLE_LOCAL", "").lower() not in (
             "1",
             "true",
             "yes",
         ):
+            _shared_loogle_init_done = True
             return None, False
 
-        logger.info("Local loogle enabled, initializing (shared)...")
-        _shared_loogle_manager = LoogleManager(project_path=lean_project_path)
-        if _shared_loogle_manager.ensure_installed():
-            if await _shared_loogle_manager.start():
-                _shared_loogle_available = True
-                logger.info("Shared local loogle started successfully")
+        try:
+            logger.info("Local loogle enabled, initializing (shared)...")
+            if _shared_loogle_manager is None:
+                _shared_loogle_manager = LoogleManager(project_path=lean_project_path)
+            if _shared_loogle_manager.ensure_installed():
+                if await _shared_loogle_manager.start():
+                    _shared_loogle_available = True
+                    _shared_loogle_init_done = True
+                    logger.info("Shared local loogle started successfully")
+                else:
+                    _shared_loogle_available = False
+                    logger.warning("Local loogle failed to start, will use remote API")
             else:
-                logger.warning("Local loogle failed to start, will use remote API")
-        else:
-            logger.warning("Local loogle installation failed, will use remote API")
+                _shared_loogle_available = False
+                logger.warning("Local loogle installation failed, will use remote API")
+        except Exception:
+            _shared_loogle_available = False
+            logger.exception("Local loogle initialization failed, will retry later")
         return _shared_loogle_manager, _shared_loogle_available
 
 
