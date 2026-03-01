@@ -1,5 +1,6 @@
 import builtins
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path, PurePosixPath
 from threading import Lock
 
@@ -82,11 +83,12 @@ def startup_client(ctx: Context):
             # Both are Path objects now, direct comparison works
             if client.project_path == lean_project_path:
                 return  # Client already set up correctly - reuse it!
-            # Different project path - close old client
+            # Different project path - close old client (with timeout to avoid hang)
             try:
-                client.close()
+                with ThreadPoolExecutor(1) as pool:
+                    pool.submit(client.close).result(timeout=10)
             except Exception:
-                logger.exception("Lean client close failed")
+                logger.warning("Lean client close timed out or failed, proceeding")
 
         # Need to create a new client
         # In test environments, prevent repeated cache downloads
