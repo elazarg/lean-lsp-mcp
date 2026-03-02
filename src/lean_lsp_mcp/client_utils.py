@@ -46,7 +46,9 @@ def startup_client(ctx: Context):
         try:
             with OutputCapture() as output:
                 client = LeanLSPClient(
-                    lean_project_path, initial_build=False, prevent_cache_get=prevent_cache
+                    lean_project_path,
+                    initial_build=False,
+                    prevent_cache_get=prevent_cache,
                 )
                 logger.info(f"Connected to Lean language server at {lean_project_path}")
             build_output = output.get_output()
