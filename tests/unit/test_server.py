@@ -144,6 +144,7 @@ async def test_app_lifespan_preserves_startup_error(
         async with server.app_lifespan(object()):
             pass
 
+
 def test_rate_limited_allows_within_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     times = iter([100, 101])
     monkeypatch.setattr(server.time, "time", lambda: next(times))
