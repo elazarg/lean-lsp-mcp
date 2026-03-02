@@ -527,6 +527,7 @@ def test_lean_search_returns_empty_for_no_matches(monkeypatch, reload_search_uti
 
 
 TEST_PROJECT_ROOT = Path(__file__).resolve().parents[1] / "test_project"
+MATHLIB_DIR = TEST_PROJECT_ROOT / ".lake" / "packages" / "mathlib"
 
 
 def test_lean_search_integration_project_root(reload_search_utils):
@@ -548,6 +549,7 @@ def test_lean_search_integration_project_root(reload_search_utils):
     ]
 
 
+@pytest.mark.skipif(not MATHLIB_DIR.is_dir(), reason="mathlib not downloaded")
 def test_lean_search_integration_mathlib(reload_search_utils):
     search_utils = reload_search_utils
     available, message = search_utils.check_ripgrep_status()
@@ -572,6 +574,7 @@ def test_lean_search_integration_mathlib(reload_search_utils):
     )
 
 
+@pytest.mark.skipif(not MATHLIB_DIR.is_dir(), reason="mathlib not downloaded")
 def test_lean_search_integration_mathlib_prefix_results(reload_search_utils):
     search_utils = reload_search_utils
     available, message = search_utils.check_ripgrep_status()

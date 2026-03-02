@@ -79,8 +79,7 @@ theorem test : ℕ → ℕ := by
             content = f.read()
 
         assert content == lean_code, (
-            "Unicode content was corrupted. "
-            "Expected Unicode symbols to be preserved"
+            "Unicode content was corrupted. Expected Unicode symbols to be preserved"
         )
     finally:
         if temp_path.exists():
