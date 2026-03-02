@@ -1,7 +1,7 @@
 import builtins
 import os
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from threading import Lock
 
 from mcp.server.fastmcp import Context
